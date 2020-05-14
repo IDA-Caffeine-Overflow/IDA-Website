@@ -6,23 +6,24 @@ import requests
 from firebase import firebase
 import datetime
 import urllib
-# import gensim 
+ 
 
 #AUDIO
 import glob  
-import os  
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import librosa  
 import numpy as np  
-from keras.models import load_model 
+# from keras.models import load_model 
 
 #TEXT
 import speech_recognition as s
 import gensim
 model = gensim.models.KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300-SLIM.bin', binary=True) 
-print(model.most_similar('hello'))#Create model from word2vec file 
+# print(model.most_similar('hello'))#Create model from word2vec file 
 import nltk
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
+# nltk.download('punkt')
+# nltk.download('averaged_perceptron_tagger')
 from nltk import word_tokenize
 
 #MAP
@@ -31,24 +32,25 @@ import gmplot
 #IMAGE
 import shutil
 
+# Warnings
+
 
 
 app = Flask(__name__)
 # db = firestore.client()
 config = {
-    "apiKey": "AIzaSyB2vdc2feXAzubawQTN7HKuoh4z6mtkFF8",
-    "authDomain": "sih-1-f6eb8.firebaseapp.com",
-    "databaseURL": "https://sih-1-f6eb8.firebaseio.com",
-    "projectId": "sih-1-f6eb8",
-    "storageBucket": "sih-1-f6eb8.appspot.com",
-    "messagingSenderId": "244861591761",
-    "appId": "1:244861591761:web:edefce181438e47262e5f0",
-    "measurementId": "G-ZF8BTFBRB2"
+  "apiKey": "AIzaSyAT6S-AHV2t23r2spbgxSHZ-9T0moDAdMM",
+  "authDomain": "unisys-a75c1.firebaseapp.com",
+  "databaseURL": "https://unisys-a75c1.firebaseio.com",
+  "projectId": "unisys-a75c1",
+  "storageBucket": "unisys-a75c1.appspot.com",
+  "messagingSenderId": "919856881921",
+  "appId": "1:919856881921:web:1c02fb82f68fce0d147b00"
 }
 
-cred = credentials.Certificate("key.json")
+cred = credentials.Certificate("unisys-key.json")
 default_app = initialize_app(cred)
-bucket = storage.bucket(name="sih-1-f6eb8.appspot.com")
+bucket = storage.bucket(name="unisys-a75c1.appspot.com")
 db = firestore.client()
 
 # @title keywords
@@ -87,6 +89,9 @@ keywords = [
  'service',
  'hospital',
  'dispatch',
+ 'coronavirus',
+ 'fever',
+
  'power',
  'outage',
  'ambulance',
@@ -378,6 +383,8 @@ keywords = [
  'damage',
  'blunt',
  'trauma',
+ 'corona',
+ 'symptoms',
  'diss',
  'lacerate',
  'offend',
@@ -601,11 +608,11 @@ def textPriority(text1):
         if exit == 'true':
           break
     #print('Matching label for ', call, 'is ', max_label)
-    print (max_avg)
+    # print (max_avg)
     if (kc==0):
           kc=0.5
     max_avg_1 = max_avg*kc
-    print(kc)
+    # print(kc)
     dict[inde[ind]]=max_avg_1
     ind =ind+1
     #print(dict)
@@ -642,7 +649,7 @@ def extPriority(text1):
     call_tokens = word_tokenize(call)  #
     call_pos = nltk.pos_tag(call_tokens) #finds the pos and stores it in a list
     call_words = [item[0].lower() for item in call_pos if item[1] in wanted_tags]
-    print(call_words)
+    # print(call_words)
     sum_cos = 0
     count = 0
     exit = 'false'
@@ -701,7 +708,7 @@ def extPriority(text1):
       kcount=0.5
     max_avg1=max_avg*kcount
     
-    print(max_avg,kcount,max_avg*kcount)
+    # print(max_avg,kcount,max_avg*kcount)
           
     dict[inde[ind]]=max_avg1
     ind =ind+1
@@ -739,10 +746,13 @@ def pred():
         ref = db.collection('users')
         docs = ref.stream()
         for doc in docs:
-            img = 'images/'+doc.id
-            b = bucket.blob(img)
-            url =  b.generate_signed_url(datetime.timedelta(seconds=300),method='GET')
-            url_d[doc.id] = url
+              img = 'images/'+doc.id
+              b = bucket.blob(img)
+              # print(b)
+              url =  b.generate_signed_url(datetime.timedelta(seconds=300),method='GET')
+              url_d[doc.id] = url
+              # img = 'images/'+'corona.jpg'
+              # print(url)
             # r = requests.get(url,stream=True)
             # local = open(doc.id+'.jpg', 'wb')
             # r.raw.decode_content = True
@@ -750,14 +760,14 @@ def pred():
 
 
         d = extPriority(document)
-        print(d);
+        # print(d);
         # a = bucket.blob('text')
         # url =  a.generate_signed_url(datetime.timedelta(seconds=300),method='GET')
         # +0.2*pred_list[id]
         for id in d.keys():
               d[id] = d[id]
-        print(d)
-        print(sorted(d.items(), key= lambda x:x[1],reverse=True))
+        # print(d)
+        # print(sorted(d.items(), key= lambda x:x[1],reverse=True))
         df = sorted(d.items(), key= lambda x:x[1],reverse=True)
         
         
@@ -784,7 +794,8 @@ def audio():
             try:
                 text = sr.recognize_google(audio)
             except s.UnknownValueError:
-                text = 'I am scared '
+                # l = ['I am stuck in a building and it is about to collapse','There is fire in my home']
+                text = 'I am stuck in a building and it is about to collapse'
             # print(text)
         document[doc.id] = text;
         # print(document)
@@ -804,7 +815,7 @@ def audio():
         
     #     pred_list[doc.id] =prediction
     # print(pred_list)
-    print(document)
+    # print(document)
     return render_template('a.html',document=document)
 
 @app.route('/plot',methods=['POST','GET'])
@@ -818,8 +829,8 @@ def plot():
             lat.append(doc.to_dict()['location']['latitude'])
             lon.append(doc.to_dict()['location']['longitude'])
       gmap1 = gmplot.GoogleMapPlotter(13.0319627,77.5642704, 13 )
-      print(lat)
-      print(lon)
+      # print(lat)
+      # print(lon)
       gmap1.heatmap(lat, lon)
       gmap1.draw("templates\map.html")
       
